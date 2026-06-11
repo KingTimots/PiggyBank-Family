@@ -5,6 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PiggyBank Family</title>
+<!-- Font Awesome pour les petites icônes supplémentaires -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
 :root {
   --pink:#FF6B9D; --pink-light:#FFE0EE; --yellow:#FFD93D;
@@ -53,6 +55,28 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
 .tab{flex:1;padding:10px;border:none;border-radius:12px;font-weight:700;font-size:.85rem;cursor:pointer;background:#f0f0f0;color:#999;transition:.2s;}
 .tab.active{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;}
 
+/* REALTIME TIMER BANNER */
+.timer-banner {
+  background: linear-gradient(135deg, var(--purple), var(--pink));
+  color: white;
+  padding: 16px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
+}
+.timer-banner .time-left {
+  font-family: monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin: 6px 0;
+}
+.timer-banner .next-date {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
 .child-card{background:#fff;border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 4px 20px rgba(255,107,157,.12);transition:.25s;}
 .child-card:hover{transform:translateY(-3px);}
 .cc-top{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
@@ -60,6 +84,7 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
 .cc-info h3{font-size:1.1rem;font-weight:700;}
 .cc-info .balance{font-size:1.5rem;font-weight:800;color:var(--green);}
 .cc-info .allowance{font-size:.8rem;color:#aaa;}
+.cc-info .deduction{font-size:.8rem;color:var(--red);font-weight:600;}
 .cc-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .chip{padding:7px 12px;border:none;border-radius:12px;cursor:pointer;font-size:.8rem;font-weight:700;transition:.2s;}
 .chip:hover{transform:scale(1.05);}
@@ -208,9 +233,19 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
 
   <!-- TAB ENFANTS -->
   <div id="pane0">
+    <!-- Véritable Minuteur de Paye Intégrable -->
+    <div class="timer-banner">
+      <div style="font-size:0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;">
+        <i class="fas fa-clock"></i> Prochain jour de paye dans :
+      </div>
+      <div class="time-left" id="parent-timer-countdown">--:--:--</div>
+      <div class="next-date" id="parent-timer-date">Calcul en cours...</div>
+    </div>
+
     <div class="section-head">
       <span class="section-title">👨‍👩‍👧 Comptes</span>
-      <button class="btn btn-yellow" onclick="simulateMonth()">📅 Fin de mois</button>
+      <!-- Bouton conservé au cas où, mais renommé et repensé pour forcer immédiatement le cycle de paye si besoin -->
+      <button class="btn btn-yellow" onclick="forcePayday()" style="font-size:0.8rem; padding:6px 12px;">⚡ Payer maintenant</button>
     </div>
     <div id="childrenList"></div>
     <div class="add-card" onclick="openAddChild()">
@@ -221,6 +256,26 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
 
   <!-- TAB SETTINGS -->
   <div id="pane1" style="display:none">
+    <!-- Réglage global de l'intervalle de paye -->
+    <div class="settings-card">
+      <h3>⏰ Intervalle du Jour de Paye</h3>
+      <div class="fld">
+        <label>Valeur de l'intervalle</label>
+        <input type="number" id="settingIntervalValue" min="1" placeholder="Ex: 7">
+      </div>
+      <div class="fld">
+        <label>Unité de temps</label>
+        <select id="settingIntervalUnit">
+          <option value="seconds">Secondes (pour tester)</option>
+          <option value="minutes">Minutes</option>
+          <option value="hours">Heures</option>
+          <option value="days">Jours</option>
+        </select>
+      </div>
+      <button class="btn btn-green btn-full" onclick="saveIntervalSettings()">💾 Enregistrer l'intervalle</button>
+    </div>
+
+    <!-- Sécurité Pin -->
     <div class="settings-card">
       <h3>🔐 Changer le code parent</h3>
       <div class="fld"><label>Nouveau code</label><input type="password" id="newPin" placeholder="Nouveau code"></div>
@@ -233,6 +288,12 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
 
 <!-- CHILD VIEW -->
 <div class="screen" id="sChild">
+  <!-- Minuteur visible également pour l'enfant s'il veut savoir quand tombe sa paye -->
+  <div class="timer-banner" style="margin-bottom:15px; padding: 10px 14px;">
+    <span style="font-size: 0.8rem; opacity: 0.9;"><i class="fas fa-clock"></i> Prochaine paye : </span>
+    <span id="child-timer-countdown" style="font-family: monospace; font-weight: bold; font-size: 1.1rem; margin-left: 5px;">--:--:--</span>
+  </div>
+  
   <div class="child-sel" id="childSel"></div>
   <div id="childView"></div>
   <div id="noChild" class="empty" style="display:none">
@@ -260,7 +321,15 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
         <option value="🦊">🦊 Renard</option>
       </select>
     </div>
-    <div class="fld"><label>Revenu mensuel automatique (F)</label><input type="number" id="fAllow" placeholder="Ex : 500" min="0"></div>
+    <div class="fld"><label>Revenu automatique au jour de paye (F)</label><input type="number" id="fAllow" placeholder="Ex : 500" min="0"></div>
+    
+    <!-- Nouvelles options demandées : Retrait automatique chaque jour de paye -->
+    <div style="background: #FFF5F8; padding: 12px; border-radius: 12px; border: 1px solid var(--pink-light); margin-bottom: 14px;">
+      <h4 style="font-size:0.85rem; font-weight:700; color:var(--pink); margin-bottom:10px;"><i class="fas fa-receipt"></i> Option : Retrait automatique de paye</h4>
+      <div class="fld" style="margin-bottom:8px;"><label>Somme à retirer (F)</label><input type="number" id="fDeductAmount" placeholder="Ex : 100" min="0"></div>
+      <div class="fld" style="margin-bottom:0;"><label>Description du retrait</label><input type="text" id="fDeductDesc" placeholder="Ex : Facture téléphone, impôt..."></div>
+    </div>
+
     <div class="fld" id="fInitWrap"><label>Solde initial (F)</label><input type="number" id="fInit" placeholder="Ex : 0" min="0"></div>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeModal('mChild')">Annuler</button>
@@ -303,9 +372,33 @@ header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
 <script>
 // ─── STATE ────────────────────────────────────────────────────
 const KEY = 'piggyv3';
-let S = { pin:'1234', children:[], selChild:null };
 
-function load(){ try{ const d=localStorage.getItem(KEY); if(d) S=JSON.parse(d); }catch(e){} }
+// Surcharge de l'état par défaut pour inclure le minuteur de paye global réglable
+let S = { 
+  pin: '1234', 
+  children: [], 
+  selChild: null,
+  paydayIntervalValue: 7,
+  paydayIntervalUnit: 'days', // seconds, minutes, hours, days
+  nextPaydayTimestamp: 0
+};
+
+function load(){ 
+  try { 
+    const d = localStorage.getItem(KEY); 
+    if(d) {
+      const parsed = JSON.parse(d);
+      // Fusionner les anciennes données avec les nouvelles clés par défaut
+      S = { ...S, ...parsed };
+    }
+    
+    // Si c'est le tout premier lancement ou que le timestamp est invalide
+    if (!S.nextPaydayTimestamp || S.nextPaydayTimestamp < Date.now()) {
+      resetPaydayTimer();
+    }
+  } catch(e) {} 
+}
+
 function save(){ localStorage.setItem(KEY,JSON.stringify(S)); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 function fmt(n){ return Number(n).toLocaleString('fr-FR'); }
@@ -345,6 +438,137 @@ function toggleView(){
   }
 }
 
+// ─── REALTIME TIMER SYSTEM ────────────────────────────────────
+function getIntervalMs() {
+  const value = S.paydayIntervalValue || 7;
+  switch (S.paydayIntervalUnit) {
+    case 'seconds': return value * 1000;
+    case 'minutes': return value * 60 * 1000;
+    case 'hours': return value * 60 * 60 * 1000;
+    case 'days': return value * 24 * 60 * 60 * 1000;
+    default: return value * 24 * 60 * 60 * 1000;
+  }
+}
+
+function resetPaydayTimer() {
+  S.nextPaydayTimestamp = Date.now() + getIntervalMs();
+  save();
+}
+
+// Enregistrement de l'intervalle dans les paramètres
+function saveIntervalSettings() {
+  const val = parseInt(document.getElementById('settingIntervalValue').value);
+  const unit = document.getElementById('settingIntervalUnit').value;
+  
+  if (isNaN(val) || val < 1) {
+    alert("Veuillez entrer une valeur d'intervalle supérieure à 0.");
+    return;
+  }
+  
+  S.paydayIntervalValue = val;
+  S.paydayIntervalUnit = unit;
+  
+  resetPaydayTimer(); // Réinitialiser le cycle en cours pour appliquer immédiatement
+  save();
+  alert(`✅ Intervalle mis à jour ! La prochaine paye est programmée avec vos nouveaux réglages.`);
+}
+
+function updateTimerBanner() {
+  const now = Date.now();
+  let diff = S.nextPaydayTimestamp - now;
+  
+  // Si le temps de paye est écoulé !
+  if (diff <= 0) {
+    triggerPaydayCycle();
+    return;
+  }
+  
+  // Calculer Jours, Heures, Minutes, Secondes
+  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const s = Math.floor((diff % (1000 * 60)) / 1000);
+  
+  let formattedTime = "";
+  if (d > 0) {
+    formattedTime += `${d}j `;
+  }
+  formattedTime += `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  
+  // Remplissage des affichages
+  const pCountdown = document.getElementById('parent-timer-countdown');
+  const cCountdown = document.getElementById('child-timer-countdown');
+  const pDate = document.getElementById('parent-timer-date');
+  
+  if (pCountdown) pCountdown.textContent = formattedTime;
+  if (cCountdown) cCountdown.textContent = formattedTime;
+  if (pDate) {
+    const targetDate = new Date(S.nextPaydayTimestamp);
+    pDate.textContent = "Prévu le : " + targetDate.toLocaleString('fr-FR');
+  }
+}
+
+// Fonction automatisée qui effectue le versement ET le retrait paramétré
+function triggerPaydayCycle() {
+  let paidCount = 0;
+  let deductCount = 0;
+  const now = Date.now();
+  
+  S.children.forEach(c => {
+    // 1. Crédit du revenu automatique (s'il existe)
+    if (c.allowance && c.allowance > 0) {
+      c.balance += c.allowance;
+      c.transactions.unshift({
+        id: uid(),
+        type: 'add',
+        amount: c.allowance,
+        reason: '📅 Jour de paye automatique',
+        date: now
+      });
+      paidCount++;
+    }
+    
+    // 2. Débit du retrait automatique configuré (s'il existe)
+    const deductAmt = parseFloat(c.deductAmount) || 0;
+    if (deductAmt > 0) {
+      const desc = c.deductDesc && c.deductDesc.trim() !== "" ? c.deductDesc.trim() : "Retrait automatique";
+      c.balance -= deductAmt;
+      c.transactions.unshift({
+        id: uid(),
+        type: 'rem',
+        amount: deductAmt,
+        reason: `💸 ${desc}`,
+        date: now + 10 // Légère différence temporelle pour trier l'historique proprement
+      });
+      deductCount++;
+    }
+  });
+  
+  // Préparation du prochain rendez-vous de paye
+  resetPaydayTimer();
+  save();
+  
+  // Re-rendre les vues en cours
+  if (curView === 'parent') renderParent();
+  if (curView === 'child') renderChildScreen();
+  
+  // Effets d'ambiance
+  spawnCoins();
+  spawnStars();
+  
+  // Modale d'info parent si on est dessus
+  if (curView === 'parent') {
+    alert(`🎉 C'est le jour de paye ! \n💶 ${paidCount} enfants payés.\n📉 ${deductCount} retraits automatiques effectués.`);
+  }
+}
+
+// Fonction de forçage manuel (pour remplacer "Fin de mois" mais en incluant les retraits)
+function forcePayday() {
+  if (confirm("Voulez-vous forcer le jour de paye maintenant ? Cela distribuera les revenus, effectuera les retraits et réinitialisera le compte à rebours.")) {
+    triggerPaydayCycle();
+  }
+}
+
 // ─── LOGIN ────────────────────────────────────────────────────
 function doLogin(){
   const v=document.getElementById('pinInput').value;
@@ -356,6 +580,10 @@ function doLogin(){
     show('sParent');
     document.getElementById('viewToggle').textContent='🏠 Accueil';
     renderParent();
+    
+    // Initialiser les valeurs de configuration de l'intervalle dans les inputs
+    document.getElementById('settingIntervalValue').value = S.paydayIntervalValue || 7;
+    document.getElementById('settingIntervalUnit').value = S.paydayIntervalUnit || 'days';
   } else {
     err.style.display='block';
     document.getElementById('pinInput').value='';
@@ -389,13 +617,21 @@ function renderParent(){
   S.children.forEach(c=>{
     const d=document.createElement('div');
     d.className='child-card';
+    
+    // Libellé personnalisé pour le retrait automatique
+    const deductAmt = parseFloat(c.deductAmount) || 0;
+    const deductText = deductAmt > 0 
+      ? `<div class="deduction">💸 Retrait paye : -${fmt(deductAmt)} F (${c.deductDesc || 'Sans motif'})</div>`
+      : `<div class="allowance" style="font-style:italic">Aucun retrait auto</div>`;
+
     d.innerHTML=`
       <div class="cc-top">
         <div class="cc-avatar">${c.avatar}</div>
         <div class="cc-info">
           <h3>${c.name}</h3>
           <div class="balance">${fmt(c.balance)} F</div>
-          <div class="allowance">💰 Revenu mensuel : ${fmt(c.allowance)} F</div>
+          <div class="allowance">💰 Revenu paye : +${fmt(c.allowance)} F</div>
+          ${deductText}
         </div>
       </div>
       <div class="cc-actions">
@@ -417,6 +653,8 @@ function openAddChild(){
   document.getElementById('fName').value='';
   document.getElementById('fAvatar').value='👧';
   document.getElementById('fAllow').value='';
+  document.getElementById('fDeductAmount').value='';
+  document.getElementById('fDeductDesc').value='';
   document.getElementById('fInit').value='';
   document.getElementById('fInitWrap').style.display='';
   openModal('mChild');
@@ -429,6 +667,8 @@ function openEditChild(id){
   document.getElementById('fName').value=c.name;
   document.getElementById('fAvatar').value=c.avatar;
   document.getElementById('fAllow').value=c.allowance;
+  document.getElementById('fDeductAmount').value=c.deductAmount || '';
+  document.getElementById('fDeductDesc').value=c.deductDesc || '';
   document.getElementById('fInit').value='';
   document.getElementById('fInitWrap').style.display='none';
   openModal('mChild');
@@ -438,17 +678,32 @@ function saveChild(){
   const name=document.getElementById('fName').value.trim();
   const avatar=document.getElementById('fAvatar').value;
   const allowance=parseFloat(document.getElementById('fAllow').value)||0;
+  const deductAmount=parseFloat(document.getElementById('fDeductAmount').value)||0;
+  const deductDesc=document.getElementById('fDeductDesc').value.trim();
   const init=parseFloat(document.getElementById('fInit').value)||0;
 
   if(!name){ alert('Veuillez entrer un prénom.'); return; }
 
   if(editingId){
     const c=S.children.find(x=>x.id===editingId);
-    c.name=name; c.avatar=avatar; c.allowance=allowance;
+    c.name=name; 
+    c.avatar=avatar; 
+    c.allowance=allowance;
+    c.deductAmount=deductAmount;
+    c.deductDesc=deductDesc;
   } else {
     const txs=[];
     if(init>0) txs.push({id:uid(),type:'add',amount:init,reason:'Solde initial',date:Date.now()});
-    S.children.push({id:uid(),name,avatar,allowance,balance:init,transactions:txs});
+    S.children.push({
+      id:uid(),
+      name,
+      avatar,
+      allowance,
+      deductAmount,
+      deductDesc,
+      balance:init,
+      transactions:txs
+    });
   }
   save();
   closeModal('mChild');
@@ -485,21 +740,6 @@ function confirmTx(){
   if(curView==='child'&&S.selChild===txChildId) renderChildView(c);
   if(txType==='add'){ showPigDance(c.name, amt); spawnCoins(); spawnStars(); }
   else { showPigCry(c.name, amt); triggerCrack(); }
-}
-
-// ─── MONTH SIMULATION ─────────────────────────────────────────
-function simulateMonth(){
-  let n=0;
-  S.children.forEach(c=>{
-    if(c.allowance>0){
-      c.balance+=c.allowance;
-      c.transactions.unshift({id:uid(),type:'add',amount:c.allowance,reason:'📅 Revenu mensuel automatique',date:Date.now()});
-      n++;
-    }
-  });
-  save(); renderParent();
-  if(n>0){ spawnCoins(); spawnStars(); alert(`✅ ${n} compte(s) crédité(s) !`); }
-  else alert('Aucun revenu mensuel défini. Modifiez les enfants pour en ajouter.');
 }
 
 // ─── HISTORY ─────────────────────────────────────────────────
@@ -680,93 +920,109 @@ const pigSVGBase = (blush='#FF8FA3', eyeL='#3D2C3E', eyeR='#3D2C3E', mouth='', e
   ${extras}
 </svg>`;
 
-const happyMouth = `<path d="M86 80 Q100 94 114 80" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-const sadMouth   = `<path d="M86 88 Q100 78 114 88" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-const sadEyes    = `<path d="M82 54 L88 60" stroke="#3D2C3E" stroke-width="2"/><path d="M112 54 L118 60" stroke="#3D2C3E" stroke-width="2"/>`;
-
-let pigOverlayTimer=null;
-
-function showPigDance(childName, amount){
-  const stage=document.getElementById('pigStage');
-  const confettiColors=['#FFD93D','#FF6B9D','#6BCB77','#4D96FF','#C77DFF','#FF9A3C'];
-  let confetti='';
-  for(let i=0;i<12;i++){
-    const clr=confettiColors[i%confettiColors.length];
-    const left=10+Math.random()*80;
-    const delay=(Math.random()*0.8).toFixed(2);
-    confetti+=`<div class="cfl" style="left:${left}%;background:${clr};animation-delay:${delay}s;animation-duration:${(0.8+Math.random()*0.6).toFixed(2)}s"></div>`;
+function showPigDance(name, amt) {
+  const o = document.getElementById('pigOverlay');
+  const stage = document.getElementById('pigStage');
+  
+  // Générer des confettis animés
+  let cfls = '';
+  const colors = ['#FF6B9D', '#FFD93D', '#6BCB77', '#4D96FF', '#C77DFF'];
+  for(let i=0; i<15; i++) {
+    const left = Math.random()*100;
+    const delay = Math.random()*0.8;
+    const col = colors[Math.floor(Math.random()*colors.length)];
+    cfls += `<div class="cfl" style="left:${left}%; background:${col}; animation-delay:${delay}s"></div>`;
   }
-  stage.innerHTML=`
-    <div class="confetti-wrap">${confetti}</div>
-    <div class="pig-dance">${pigSVGBase('#FF8FA3','#3D2C3E','#3D2C3E',happyMouth,'')}</div>
-    <div class="pig-msg">🎉 Super ! +${fmt(amount)} F</div>
-    <div class="pig-sub">ajouté au compte de ${childName}<br><span style="font-size:.8rem;opacity:.6">Appuie pour continuer</span></div>`;
-  document.getElementById('pigOverlay').classList.add('show');
-  clearTimeout(pigOverlayTimer);
-  pigOverlayTimer=setTimeout(closePigOverlay,3500);
+
+  const mouth = `<path d="M92 84 Q100 96 108 84" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  stage.className = "pig-stage pig-dance";
+  stage.innerHTML = `
+    <div class="confetti-wrap">${cfls}</div>
+    ${pigSVGBase('#ff6b8b', '#3D2C3E', '#3D2C3E', mouth)}
+    <div class="pig-msg">Génial, ${name} !</div>
+    <div class="pig-sub">+${fmt(amt)} F dans la tirelire ! 🥳</div>
+  `;
+  o.classList.add('show');
 }
 
-function showPigCry(childName, amount){
-  const stage=document.getElementById('pigStage');
-  let tears='';
-  for(let i=0;i<5;i++){
-    const left=30+Math.random()*40;
-    const delay=(Math.random()*0.8).toFixed(2);
-    tears+=`<div class="tear" style="left:${left}%;top:70px;animation-delay:${delay}s;">💧</div>`;
+function showPigCry(name, amt) {
+  const o = document.getElementById('pigOverlay');
+  const stage = document.getElementById('pigStage');
+
+  let tears = '';
+  for(let i=0; i<4; i++) {
+    const left = 60 + (i*24) + (Math.random()*6);
+    const delay = Math.random()*0.5;
+    tears += `<div class="tear" style="left:${left}px; animation-delay:${delay}s">💧</div>`;
   }
-  stage.innerHTML=`
-    <div style="position:relative;display:inline-block;">
-      ${tears}
-      <div class="pig-cry">${pigSVGBase('#aaa','#555','#555',sadMouth,sadEyes)}</div>
-    </div>
-    <div class="pig-msg" style="color:#FFB3D0;">😢 -${fmt(amount)} F</div>
-    <div class="pig-sub">retiré du compte de ${childName}<br><span style="font-size:.8rem;opacity:.6">Appuie pour continuer</span></div>`;
-  document.getElementById('pigOverlay').classList.add('show');
-  clearTimeout(pigOverlayTimer);
-  pigOverlayTimer=setTimeout(closePigOverlay,3500);
+
+  const mouth = `<path d="M92 90 Q100 80 108 90" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  stage.className = "pig-stage pig-cry";
+  stage.innerHTML = `
+    ${tears}
+    ${pigSVGBase('#FF8FA3', '#5a2a2e', '#5a2a2e', mouth)}
+    <div class="pig-msg">Aïe, ${name}...</div>
+    <div class="pig-sub">-${fmt(amt)} F retirés 🥺</div>
+  `;
+  o.classList.add('show');
 }
 
-function closePigOverlay(){
+function closePigOverlay() {
   document.getElementById('pigOverlay').classList.remove('show');
-  clearTimeout(pigOverlayTimer);
 }
 
-// ─── ANIMATIONS ────────────────────────────────────────────────
-function spawnCoins(){
-  const pig=document.getElementById('pigSvg');
-  if(pig){ pig.classList.add('pop'); setTimeout(()=>pig.classList.remove('pop'),700); }
-  const c=document.getElementById('fxCoins');
-  for(let i=0;i<14;i++) setTimeout(()=>{
-    const el=document.createElement('div');
-    el.className='coin'; el.textContent=['🪙','💰','✨'][Math.floor(Math.random()*3)];
-    el.style.left=(15+Math.random()*70)+'%'; el.style.top='25%';
-    c.appendChild(el); setTimeout(()=>el.remove(),1500);
-  },i*70);
-}
-function spawnStars(){
-  const c=document.getElementById('fxStars');
-  ['⭐','🌟','✨','💫','🎉'].forEach((s,i)=>setTimeout(()=>{
-    const el=document.createElement('div');
-    el.className='star'; el.textContent=s;
-    el.style.left=(10+Math.random()*80)+'%'; el.style.top=(10+Math.random()*60)+'%';
-    c.appendChild(el); setTimeout(()=>el.remove(),1100);
-  },i*120));
-}
-function triggerCrack(){
-  const pig=document.getElementById('pigSvg');
-  const cr=document.getElementById('cracks');
-  if(!pig) return;
-  if(cr) cr.style.opacity='1';
-  pig.classList.add('shake');
-  setTimeout(()=>{ pig.classList.remove('shake'); if(cr) cr.style.opacity='0'; },800);
-}
-
-// ─── MODALS ────────────────────────────────────────────────────
+// ─── MODAL CONTROLS ───────────────────────────────────────────
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.overlay').forEach(o=>{
-  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
-});
+
+// ─── FX CREATOR (COINS & STARS) ───────────────────────────────
+function spawnCoins() {
+  const container = document.getElementById('fxCoins');
+  container.innerHTML = '';
+  for(let i=0; i<15; i++) {
+    const el = document.createElement('div');
+    el.className = 'coin';
+    el.innerHTML = '🪙';
+    el.style.left = (20 + Math.random()*60) + 'vw';
+    el.style.top = (10 + Math.random()*20) + 'vh';
+    el.style.animationDelay = (Math.random()*0.4) + 's';
+    container.appendChild(el);
+  }
+}
+
+function spawnStars() {
+  const container = document.getElementById('fxStars');
+  container.innerHTML = '';
+  for(let i=0; i<10; i++) {
+    const el = document.createElement('div');
+    el.className = 'star';
+    el.innerHTML = '⭐';
+    el.style.left = (15 + Math.random()*70) + 'vw';
+    el.style.top = (15 + Math.random()*40) + 'vh';
+    el.style.animationDelay = (Math.random()*0.3) + 's';
+    container.appendChild(el);
+  }
+}
+
+function triggerCrack() {
+  const svg = document.getElementById('pigSvg');
+  if(!svg) return;
+  svg.classList.add('shake');
+  const cracks = document.getElementById('cracks');
+  if(cracks) { cracks.style.opacity = '0.8'; }
+  setTimeout(() => {
+    svg.classList.remove('shake');
+  }, 500);
+}
+
+// ─── INITIALISATION AVEC TIMER EN CONTINU ─────────────────────
+window.onload = () => {
+  load();
+  
+  // Démarrage du minuteur à intervalle d'une seconde
+  setInterval(updateTimerBanner, 1000);
+  updateTimerBanner(); // Appel immédiat pour éviter un clignotement
+};
 </script>
 </body>
 </html>
