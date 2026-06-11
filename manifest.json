@@ -1,0 +1,15 @@
+{
+  "name": "PiggyBank Family",
+  "short_name": "PiggyBank",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FFF5F8",
+  "theme_color": "#FF6B9D",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

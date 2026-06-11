@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="fr">
+<link rel="manifest" href="manifest.json">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PiggyBank Family</title>
+<style>
+:root {
+  --pink:#FF6B9D; --pink-light:#FFE0EE; --yellow:#FFD93D;
+  --green:#6BCB77; --blue:#4D96FF; --purple:#C77DFF;
+  --orange:#FF9A3C; --bg:#FFF5F8; --card:#ffffff; --text:#3D2C3E;
+  --red:#FF4D6D;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+header{background:linear-gradient(135deg,var(--pink),var(--purple));padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(199,125,255,.3);}
+header h1{color:#fff;font-size:1.4rem;display:flex;align-items:center;gap:8px;}
+.hbtn{background:#fff;border:none;border-radius:20px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:.85rem;color:var(--purple);transition:.2s;}
+.hbtn:hover{transform:scale(1.05);}
+
+/* SCREENS */
+.screen{display:none;padding:20px;max-width:480px;margin:0 auto;}
+.screen.active{display:block;}
+
+/* LOGIN */
+#sLogin{display:none;align-items:center;justify-content:center;min-height:80vh;}
+#sLogin.active{display:flex;}
+.login-box{background:#fff;border-radius:28px;padding:40px 32px;text-align:center;box-shadow:0 8px 32px rgba(255,107,157,.2);width:100%;}
+.pig-bounce{font-size:5rem;animation:bounce 2s infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.login-box h2{font-size:1.6rem;color:var(--purple);margin:12px 0 4px;}
+.login-box p{color:#aaa;margin-bottom:24px;}
+.pin-input{width:100%;padding:14px;border:2px solid #eee;border-radius:14px;font-size:1.4rem;text-align:center;letter-spacing:8px;outline:none;margin-bottom:12px;}
+.pin-input:focus{border-color:var(--pink);}
+.err{color:var(--red);font-size:.85rem;margin-bottom:10px;display:none;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:.95rem;transition:.2s;}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:scale(.97);}
+.btn-full{width:100%;}
+.btn-pink{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;}
+.btn-green{background:linear-gradient(135deg,var(--green),#4CAF50);color:#fff;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-ghost{background:#f0f0f0;color:#666;}
+.btn-yellow{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#fff;}
+
+/* PARENT */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-size:1.1rem;font-weight:700;color:var(--purple);}
+.tabs{display:flex;gap:8px;margin-bottom:20px;}
+.tab{flex:1;padding:10px;border:none;border-radius:12px;font-weight:700;font-size:.85rem;cursor:pointer;background:#f0f0f0;color:#999;transition:.2s;}
+.tab.active{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;}
+
+.child-card{background:#fff;border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 4px 20px rgba(255,107,157,.12);transition:.25s;}
+.child-card:hover{transform:translateY(-3px);}
+.cc-top{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.cc-avatar{font-size:2.4rem;}
+.cc-info h3{font-size:1.1rem;font-weight:700;}
+.cc-info .balance{font-size:1.5rem;font-weight:800;color:var(--green);}
+.cc-info .allowance{font-size:.8rem;color:#aaa;}
+.cc-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{padding:7px 12px;border:none;border-radius:12px;cursor:pointer;font-size:.8rem;font-weight:700;transition:.2s;}
+.chip:hover{transform:scale(1.05);}
+.chip-add{background:#e8f9ed;color:var(--green);}
+.chip-rem{background:#ffe8ee;color:var(--red);}
+.chip-hist{background:#eef2ff;color:var(--blue);}
+.chip-edit{background:#f5eeff;color:var(--purple);}
+
+.add-card{background:#fff;border-radius:20px;padding:24px;border:3px dashed #eee;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:#ccc;font-weight:700;transition:.25s;min-height:100px;}
+.add-card:hover{border-color:var(--pink);color:var(--pink);}
+
+/* CHILD VIEW */
+.child-sel{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;margin-bottom:20px;}
+.csel-btn{flex-shrink:0;background:#fff;border:3px solid transparent;border-radius:16px;padding:10px 16px;cursor:pointer;font-size:.85rem;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;transition:.2s;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.csel-btn.active,.csel-btn:hover{border-color:var(--pink);}
+.csel-btn span:first-child{font-size:1.6rem;}
+
+.pig-wrap{text-align:center;margin:10px 0;}
+.pig-wrap svg{transition:transform .5s ease;transform-origin:center bottom;}
+.bal-big{font-size:3rem;font-weight:900;text-align:center;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:10px 0 4px;}
+.bal-lbl{text-align:center;color:#aaa;font-size:.9rem;margin-bottom:20px;}
+
+.tx-list{list-style:none;}
+.tx-item{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.tx-icon{font-size:1.3rem;width:36px;text-align:center;}
+.tx-info{flex:1;}
+.tx-reason{font-weight:600;font-size:.9rem;}
+.tx-date{font-size:.75rem;color:#aaa;margin-top:2px;}
+.tx-amt{font-weight:800;font-size:1rem;}
+.pos{color:var(--green);}
+.neg{color:var(--red);}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:28px 28px 0 0;padding:28px 24px 36px;width:100%;max-width:480px;animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{margin-bottom:20px;color:var(--purple);font-size:1.2rem;}
+.fld{margin-bottom:14px;}
+.fld label{display:block;font-size:.82rem;font-weight:600;color:#888;margin-bottom:5px;}
+.fld input,.fld select{width:100%;padding:12px 14px;border:2px solid #eee;border-radius:12px;font-size:1rem;outline:none;transition:.2s;background:#fff;}
+.fld input:focus,.fld select:focus{border-color:var(--pink);}
+.modal-btns{display:flex;gap:10px;margin-top:8px;}
+.modal-btns .btn{flex:1;}
+
+/* HISTORY modal */
+.hist-modal{border-radius:28px 28px 0 0;}
+
+/* COINS & STARS */
+.fx-layer{position:fixed;inset:0;pointer-events:none;z-index:300;}
+.coin{position:absolute;font-size:1.4rem;animation:coinFall 1.4s ease-out forwards;}
+@keyframes coinFall{0%{transform:translateY(-40px) rotate(0);opacity:1}100%{transform:translateY(280px) rotate(720deg);opacity:0}}
+.star{position:absolute;font-size:1.2rem;animation:starPop 1s ease-out forwards;}
+@keyframes starPop{0%{transform:scale(0) rotate(0);opacity:1}100%{transform:scale(1.5) rotate(180deg);opacity:0}}
+.shake{animation:shk .5s ease;}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-14px)}40%{transform:translateX(14px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pop{animation:pop .6s ease;}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+
+/* PIG OVERLAY */
+.pig-overlay{
+  position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.pig-overlay.show{opacity:1;pointer-events:all;}
+.pig-stage{position:relative;text-align:center;}
+.pig-msg{font-size:1.4rem;font-weight:800;color:#fff;margin-top:16px;text-shadow:0 2px 8px rgba(0,0,0,.4);}
+.pig-sub{font-size:1rem;color:rgba(255,255,255,.8);margin-top:6px;}
+
+/* DANCE */
+.pig-dance svg{animation:dance 0.5s ease-in-out infinite alternate;}
+@keyframes dance{
+  0%  {transform:rotate(-12deg) translateY(0)   scale(1);}
+  25% {transform:rotate(0deg)   translateY(-18px) scale(1.08);}
+  50% {transform:rotate(12deg)  translateY(0)   scale(1);}
+  75% {transform:rotate(0deg)   translateY(-18px) scale(1.08);}
+  100%{transform:rotate(-12deg) translateY(0)   scale(1);}
+}
+.confetti-wrap{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:260px;height:60px;pointer-events:none;}
+.cfl{position:absolute;width:10px;height:10px;border-radius:2px;animation:cflFall 1.2s ease-in infinite;}
+@keyframes cflFall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}
+
+/* CRY */
+.pig-cry svg{animation:sob 0.8s ease-in-out infinite alternate;}
+@keyframes sob{
+  0%  {transform:translateY(0)   scale(1);}
+  50% {transform:translateY(6px) scale(.97);}
+  100%{transform:translateY(0)   scale(1);}
+}
+.tear{position:absolute;font-size:1.2rem;animation:tearDrop 1s ease-in infinite;}
+@keyframes tearDrop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(60px);opacity:0}}
+
+/* SETTINGS */
+.settings-card{background:#fff;border-radius:20px;padding:24px;box-shadow:0 4px 20px rgba(255,107,157,.12);margin-bottom:16px;}
+.settings-card h3{font-size:1rem;font-weight:700;color:var(--purple);margin-bottom:16px;}
+
+.empty{text-align:center;padding:40px 20px;color:#ccc;}
+.empty .ei{font-size:3rem;margin-bottom:10px;}
+
+@media(max-width:400px){.bal-big{font-size:2.4rem;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>🐷</span> PiggyBank Family</h1>
+  <button class="hbtn" id="viewToggle" onclick="toggleView()">👨‍👩‍👧 Parents</button>
+</header>
+
+<!-- HOME -->
+<div class="screen" id="sHome">
+  <div style="text-align:center;padding:40px 20px 20px;">
+    <div class="pig-bounce" style="font-size:5rem;">🐷</div>
+    <h2 style="font-size:1.8rem;color:var(--purple);margin:16px 0 8px;">PiggyBank Family</h2>
+    <p style="color:#aaa;margin-bottom:40px;">Apprends à gérer ton argent !</p>
+    <button class="btn btn-green btn-full" style="font-size:1.1rem;padding:18px;margin-bottom:16px;border-radius:18px;" onclick="goChild()">
+      🧒 Espace Enfants
+    </button>
+    <button class="btn btn-pink btn-full" style="font-size:1.1rem;padding:18px;border-radius:18px;" onclick="goLogin()">
+      👨‍👩‍👧 Espace Parents
+    </button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="sLogin">
+  <div class="login-box">
+    <div class="pig-bounce">🐷</div>
+    <h2>Espace Parents</h2>
+    <p>Entrez votre code secret</p>
+    <input class="pin-input" type="password" id="pinInput" maxlength="6" placeholder="••••" onkeyup="if(event.key==='Enter')doLogin()">
+    <p class="err" id="loginErr">❌ Code incorrect, réessayez !</p>
+    <button class="btn btn-pink btn-full" onclick="doLogin()">🔐 Se connecter</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px;" onclick="show('sHome');curView='home';">← Retour</button>
+    <p style="margin-top:14px;font-size:.8rem;color:#ccc;">Code par défaut : <strong>1234</strong></p>
+  </div>
+</div>
+
+<!-- PARENT -->
+<div class="screen" id="sParent">
+  <div class="tabs">
+    <button class="tab active" id="tab0" onclick="showTab(0)">👧 Enfants</button>
+    <button class="tab" id="tab1" onclick="showTab(1)">⚙️ Paramètres</button>
+  </div>
+
+  <!-- TAB ENFANTS -->
+  <div id="pane0">
+    <div class="section-head">
+      <span class="section-title">👨‍👩‍👧 Comptes</span>
+      <button class="btn btn-yellow" onclick="simulateMonth()">📅 Fin de mois</button>
+    </div>
+    <div id="childrenList"></div>
+    <div class="add-card" onclick="openAddChild()">
+      <span style="font-size:2rem;">＋</span>
+      <span>Ajouter un enfant</span>
+    </div>
+  </div>
+
+  <!-- TAB SETTINGS -->
+  <div id="pane1" style="display:none">
+    <div class="settings-card">
+      <h3>🔐 Changer le code parent</h3>
+      <div class="fld"><label>Nouveau code</label><input type="password" id="newPin" placeholder="Nouveau code"></div>
+      <div class="fld"><label>Confirmer</label><input type="password" id="newPinC" placeholder="Confirmer"></div>
+      <button class="btn btn-pink btn-full" onclick="changePin()">Enregistrer</button>
+      <p id="pinMsg" style="margin-top:10px;font-size:.85rem;display:none;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- CHILD VIEW -->
+<div class="screen" id="sChild">
+  <div class="child-sel" id="childSel"></div>
+  <div id="childView"></div>
+  <div id="noChild" class="empty" style="display:none">
+    <div class="ei">🐷</div>
+    <p>Aucun compte enfant.<br>Demande à tes parents !</p>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add/Edit child -->
+<div class="overlay" id="mChild">
+  <div class="modal">
+    <h2 id="mChildTitle">➕ Ajouter un enfant</h2>
+    <div class="fld"><label>Prénom *</label><input type="text" id="fName" placeholder="Ex : Léa"></div>
+    <div class="fld"><label>Avatar</label>
+      <select id="fAvatar">
+        <option value="👧">👧 Fille</option>
+        <option value="👦">👦 Garçon</option>
+        <option value="🧒">🧒 Enfant</option>
+        <option value="👶">👶 Bébé</option>
+        <option value="🦁">🦁 Lion</option>
+        <option value="🐻">🐻 Ours</option>
+        <option value="🐼">🐼 Panda</option>
+        <option value="🦊">🦊 Renard</option>
+      </select>
+    </div>
+    <div class="fld"><label>Revenu mensuel automatique (F)</label><input type="number" id="fAllow" placeholder="Ex : 500" min="0"></div>
+    <div class="fld" id="fInitWrap"><label>Solde initial (F)</label><input type="number" id="fInit" placeholder="Ex : 0" min="0"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('mChild')">Annuler</button>
+      <button class="btn btn-pink" onclick="saveChild()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction -->
+<div class="overlay" id="mTx">
+  <div class="modal">
+    <h2 id="mTxTitle">💰 Ajouter</h2>
+    <div class="fld"><label>Montant (F) *</label><input type="number" id="fTxAmt" placeholder="Ex : 200" min="1"></div>
+    <div class="fld"><label>Motif</label><input type="text" id="fTxReason" placeholder="Ex : Bonne note, corvée..."></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('mTx')">Annuler</button>
+      <button class="btn" id="mTxBtn" onclick="confirmTx()">✅ Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- History -->
+<div class="overlay" id="mHist">
+  <div class="modal hist-modal">
+    <h2 id="mHistTitle">📋 Historique</h2>
+    <ul class="tx-list" id="histList"></ul>
+    <button class="btn btn-ghost btn-full" style="margin-top:14px" onclick="closeModal('mHist')">Fermer</button>
+  </div>
+</div>
+
+<!-- FX layers -->
+<div class="fx-layer" id="fxCoins"></div>
+<div class="fx-layer" id="fxStars"></div>
+
+<!-- PIG OVERLAY -->
+<div class="pig-overlay" id="pigOverlay" onclick="closePigOverlay()">
+  <div class="pig-stage" id="pigStage"></div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+const KEY = 'piggyv3';
+let S = { pin:'1234', children:[], selChild:null };
+
+function load(){ try{ const d=localStorage.getItem(KEY); if(d) S=JSON.parse(d); }catch(e){} }
+function save(){ localStorage.setItem(KEY,JSON.stringify(S)); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function fmt(n){ return Number(n).toLocaleString('fr-FR'); }
+function fmtDate(ts){ return new Date(ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}); }
+
+// ─── SCREENS ─────────────────────────────────────────────────
+let curView='home';
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goChild(){
+  curView='child';
+  show('sChild');
+  document.getElementById('viewToggle').textContent='🏠 Accueil';
+  renderChildScreen();
+}
+function goLogin(){
+  curView='login';
+  show('sLogin');
+  document.getElementById('viewToggle').textContent='🏠 Accueil';
+}
+
+load();
+show('sHome');
+
+function toggleView(){
+  if(curView==='parent'){
+    curView='child';
+    show('sChild');
+    document.getElementById('viewToggle').textContent='👨‍👩‍👧 Parents';
+    renderChildScreen();
+  } else {
+    show('sLogin');
+    curView='login';
+  }
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────
+function doLogin(){
+  const v=document.getElementById('pinInput').value;
+  const err=document.getElementById('loginErr');
+  if(v===S.pin){
+    err.style.display='none';
+    document.getElementById('pinInput').value='';
+    curView='parent';
+    show('sParent');
+    document.getElementById('viewToggle').textContent='🏠 Accueil';
+    renderParent();
+  } else {
+    err.style.display='block';
+    document.getElementById('pinInput').value='';
+  }
+}
+
+function changePin(){
+  const a=document.getElementById('newPin').value;
+  const b=document.getElementById('newPinC').value;
+  const msg=document.getElementById('pinMsg');
+  msg.style.display='block';
+  if(!a||a!==b){ msg.style.color='var(--red)'; msg.textContent='❌ Les codes ne correspondent pas.'; return; }
+  S.pin=a; save();
+  msg.style.color='var(--green)'; msg.textContent='✅ Code mis à jour !';
+  document.getElementById('newPin').value='';
+  document.getElementById('newPinC').value='';
+}
+
+// ─── TABS ─────────────────────────────────────────────────────
+function showTab(i){
+  document.getElementById('pane0').style.display=i===0?'':'none';
+  document.getElementById('pane1').style.display=i===1?'':'none';
+  document.getElementById('tab0').classList.toggle('active',i===0);
+  document.getElementById('tab1').classList.toggle('active',i===1);
+}
+
+// ─── PARENT RENDER ────────────────────────────────────────────
+function renderParent(){
+  const list=document.getElementById('childrenList');
+  list.innerHTML='';
+  S.children.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='child-card';
+    d.innerHTML=`
+      <div class="cc-top">
+        <div class="cc-avatar">${c.avatar}</div>
+        <div class="cc-info">
+          <h3>${c.name}</h3>
+          <div class="balance">${fmt(c.balance)} F</div>
+          <div class="allowance">💰 Revenu mensuel : ${fmt(c.allowance)} F</div>
+        </div>
+      </div>
+      <div class="cc-actions">
+        <button class="chip chip-add" onclick="openTx('${c.id}','add')">➕ Ajouter</button>
+        <button class="chip chip-rem" onclick="openTx('${c.id}','rem')">➖ Retirer</button>
+        <button class="chip chip-hist" onclick="openHist('${c.id}')">📋 Historique</button>
+        <button class="chip chip-edit" onclick="openEditChild('${c.id}')">✏️ Modifier</button>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+// ─── CHILD MODAL ─────────────────────────────────────────────
+let editingId=null;
+
+function openAddChild(){
+  editingId=null;
+  document.getElementById('mChildTitle').textContent='➕ Ajouter un enfant';
+  document.getElementById('fName').value='';
+  document.getElementById('fAvatar').value='👧';
+  document.getElementById('fAllow').value='';
+  document.getElementById('fInit').value='';
+  document.getElementById('fInitWrap').style.display='';
+  openModal('mChild');
+}
+
+function openEditChild(id){
+  editingId=id;
+  const c=S.children.find(x=>x.id===id);
+  document.getElementById('mChildTitle').textContent='✏️ Modifier '+c.name;
+  document.getElementById('fName').value=c.name;
+  document.getElementById('fAvatar').value=c.avatar;
+  document.getElementById('fAllow').value=c.allowance;
+  document.getElementById('fInit').value='';
+  document.getElementById('fInitWrap').style.display='none';
+  openModal('mChild');
+}
+
+function saveChild(){
+  const name=document.getElementById('fName').value.trim();
+  const avatar=document.getElementById('fAvatar').value;
+  const allowance=parseFloat(document.getElementById('fAllow').value)||0;
+  const init=parseFloat(document.getElementById('fInit').value)||0;
+
+  if(!name){ alert('Veuillez entrer un prénom.'); return; }
+
+  if(editingId){
+    const c=S.children.find(x=>x.id===editingId);
+    c.name=name; c.avatar=avatar; c.allowance=allowance;
+  } else {
+    const txs=[];
+    if(init>0) txs.push({id:uid(),type:'add',amount:init,reason:'Solde initial',date:Date.now()});
+    S.children.push({id:uid(),name,avatar,allowance,balance:init,transactions:txs});
+  }
+  save();
+  closeModal('mChild');
+  renderParent();
+  if(curView==='child') renderChildScreen();
+}
+
+// ─── TRANSACTION ─────────────────────────────────────────────
+let txChildId=null, txType=null;
+
+function openTx(id,type){
+  txChildId=id; txType=type;
+  const c=S.children.find(x=>x.id===id);
+  document.getElementById('mTxTitle').textContent=type==='add'?`➕ Ajouter — ${c.name}`:`➖ Retirer — ${c.name}`;
+  document.getElementById('fTxAmt').value='';
+  document.getElementById('fTxReason').value='';
+  const btn=document.getElementById('mTxBtn');
+  btn.className='btn '+(type==='add'?'btn-green':'btn-red');
+  btn.textContent=type==='add'?'✅ Ajouter':'✅ Retirer';
+  openModal('mTx');
+}
+
+function confirmTx(){
+  const amt=parseFloat(document.getElementById('fTxAmt').value);
+  const reason=document.getElementById('fTxReason').value.trim()||(txType==='add'?'Dépôt':'Retrait');
+  if(!amt||amt<=0){ alert('Montant invalide.'); return; }
+  const c=S.children.find(x=>x.id===txChildId);
+
+  c.balance+=txType==='add'?amt:-amt;
+  c.transactions.unshift({id:uid(),type:txType,amount:amt,reason,date:Date.now()});
+  save();
+  closeModal('mTx');
+  renderParent();
+  if(curView==='child'&&S.selChild===txChildId) renderChildView(c);
+  if(txType==='add'){ showPigDance(c.name, amt); spawnCoins(); spawnStars(); }
+  else { showPigCry(c.name, amt); triggerCrack(); }
+}
+
+// ─── MONTH SIMULATION ─────────────────────────────────────────
+function simulateMonth(){
+  let n=0;
+  S.children.forEach(c=>{
+    if(c.allowance>0){
+      c.balance+=c.allowance;
+      c.transactions.unshift({id:uid(),type:'add',amount:c.allowance,reason:'📅 Revenu mensuel automatique',date:Date.now()});
+      n++;
+    }
+  });
+  save(); renderParent();
+  if(n>0){ spawnCoins(); spawnStars(); alert(`✅ ${n} compte(s) crédité(s) !`); }
+  else alert('Aucun revenu mensuel défini. Modifiez les enfants pour en ajouter.');
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────
+function openHist(id){
+  const c=S.children.find(x=>x.id===id);
+  document.getElementById('mHistTitle').textContent=`📋 Historique — ${c.name}`;
+  const ul=document.getElementById('histList');
+  ul.innerHTML='';
+  if(!c.transactions.length){
+    ul.innerHTML='<li style="text-align:center;color:#ccc;padding:20px;">Aucune transaction</li>';
+  } else {
+    c.transactions.forEach(t=>{
+      const li=document.createElement('li');
+      li.className='tx-item';
+      li.innerHTML=`<div class="tx-icon">${t.type==='add'?'💰':'💸'}</div>
+        <div class="tx-info"><div class="tx-reason">${t.reason}</div><div class="tx-date">${fmtDate(t.date)}</div></div>
+        <div class="tx-amt ${t.type==='add'?'pos':'neg'}">${t.type==='add'?'+':'-'}${fmt(t.amount)} F</div>`;
+      ul.appendChild(li);
+    });
+  }
+  openModal('mHist');
+}
+
+// ─── CHILD SCREEN ─────────────────────────────────────────────
+function renderChildScreen(){
+  const sel=document.getElementById('childSel');
+  sel.innerHTML='';
+  if(!S.children.length){
+    document.getElementById('noChild').style.display='block';
+    document.getElementById('childView').innerHTML='';
+    return;
+  }
+  document.getElementById('noChild').style.display='none';
+  S.children.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='csel-btn'+(S.selChild===c.id?' active':'');
+    b.innerHTML=`<span>${c.avatar}</span><span>${c.name}</span>`;
+    b.onclick=()=>selectChild(c.id);
+    sel.appendChild(b);
+  });
+  if(!S.selChild&&S.children.length) S.selChild=S.children[0].id;
+  const child=S.children.find(x=>x.id===S.selChild);
+  if(child) renderChildView(child);
+}
+
+function selectChild(id){
+  S.selChild=id;
+  document.querySelectorAll('.csel-btn').forEach((b,i)=>{
+    b.classList.toggle('active',S.children[i]?.id===id);
+  });
+  const c=S.children.find(x=>x.id===id);
+  renderChildView(c);
+}
+
+function renderChildView(c){
+  const neg = c.balance < 0;
+  const scale = neg ? 1 : Math.min(1+c.balance/20000,1.5);
+  const div=document.getElementById('childView');
+
+  const normalPig = `
+    <svg id="pigSvg" width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="transform:scale(${scale});transform-origin:center bottom;">
+      <ellipse cx="100" cy="115" rx="70" ry="60" fill="#FFB3BA"/>
+      <circle cx="100" cy="65" r="42" fill="#FFB3BA"/>
+      <ellipse cx="68" cy="38" rx="14" ry="18" fill="#FF8FA3" transform="rotate(-15,68,38)"/>
+      <ellipse cx="132" cy="38" rx="14" ry="18" fill="#FF8FA3" transform="rotate(15,132,38)"/>
+      <ellipse cx="68" cy="38" rx="8" ry="11" fill="#FFB3BA" transform="rotate(-15,68,38)"/>
+      <ellipse cx="132" cy="38" rx="8" ry="11" fill="#FFB3BA" transform="rotate(15,132,38)"/>
+      <circle cx="85" cy="58" r="7" fill="white"/>
+      <circle cx="115" cy="58" r="7" fill="white"/>
+      <circle cx="87" cy="59" r="4" fill="#3D2C3E"/>
+      <circle cx="117" cy="59" r="4" fill="#3D2C3E"/>
+      <circle cx="88" cy="58" r="1.5" fill="white"/>
+      <circle cx="118" cy="58" r="1.5" fill="white"/>
+      <ellipse cx="100" cy="74" rx="16" ry="12" fill="#FF8FA3"/>
+      <circle cx="93" cy="74" r="4" fill="#FF6B9D"/>
+      <circle cx="107" cy="74" r="4" fill="#FF6B9D"/>
+      <path d="M88 82 Q100 90 112 82" stroke="#FF6B9D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <rect x="65" y="160" width="22" height="30" rx="11" fill="#FFB3BA"/>
+      <rect x="113" y="160" width="22" height="30" rx="11" fill="#FFB3BA"/>
+      <path d="M170 110 Q185 95 178 80 Q171 65 180 55" stroke="#FF8FA3" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <rect x="88" y="87" width="24" height="5" rx="2.5" fill="#FF6B9D" opacity=".7"/>
+      <ellipse cx="73" cy="70" rx="10" ry="7" fill="#FF8FA3" opacity=".5"/>
+      <ellipse cx="127" cy="70" rx="10" ry="7" fill="#FF8FA3" opacity=".5"/>
+      <g id="cracks" opacity="0">
+        <path d="M80 90 L90 105 L75 115" stroke="#c0606f" stroke-width="2" fill="none"/>
+        <path d="M115 95 L120 110 L130 108" stroke="#c0606f" stroke-width="2" fill="none"/>
+        <path d="M95 140 L100 155 L90 160" stroke="#c0606f" stroke-width="2" fill="none"/>
+      </g>
+    </svg>`;
+
+  // Broken piggy bank SVG for negative balance
+  const brokenPig = `
+    <svg id="pigSvg" width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" style="animation:wobble 2s infinite ease-in-out;">
+      <style>@keyframes wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}</style>
+      <!-- Broken body left piece -->
+      <ellipse cx="75" cy="130" rx="48" ry="45" fill="#c9888f" transform="rotate(-15,75,130)"/>
+      <!-- Broken body right piece -->
+      <ellipse cx="145" cy="128" rx="45" ry="42" fill="#c9888f" transform="rotate(12,145,128)"/>
+      <!-- Gap crack in middle -->
+      <polygon points="100,85 108,100 95,115 112,130 98,155 115,155 120,130 105,115 118,100 110,85" fill="#8B3A40" opacity=".7"/>
+      <!-- Head (cracked) -->
+      <circle cx="108" cy="68" r="40" fill="#c9888f"/>
+      <!-- Crack on head -->
+      <path d="M100 40 L106 58 L98 70 L108 90" stroke="#8B3A40" stroke-width="3" fill="none"/>
+      <!-- Ears -->
+      <ellipse cx="78" cy="40" rx="12" ry="16" fill="#a06068" transform="rotate(-20,78,40)"/>
+      <ellipse cx="138" cy="38" rx="12" ry="16" fill="#a06068" transform="rotate(15,138,38)"/>
+      <!-- Sad eyes (X shape) -->
+      <line x1="94" y1="56" x2="102" y2="64" stroke="#5a2a2e" stroke-width="3" stroke-linecap="round"/>
+      <line x1="102" y1="56" x2="94" y2="64" stroke="#5a2a2e" stroke-width="3" stroke-linecap="round"/>
+      <line x1="114" y1="56" x2="122" y2="64" stroke="#5a2a2e" stroke-width="3" stroke-linecap="round"/>
+      <line x1="122" y1="56" x2="114" y2="64" stroke="#5a2a2e" stroke-width="3" stroke-linecap="round"/>
+      <!-- Snout -->
+      <ellipse cx="108" cy="76" rx="14" ry="10" fill="#a06068"/>
+      <circle cx="102" cy="76" r="3" fill="#8B3A40"/>
+      <circle cx="114" cy="76" r="3" fill="#8B3A40"/>
+      <!-- Sad mouth -->
+      <path d="M96 86 Q108 80 120 86" stroke="#8B3A40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Legs broken/scattered -->
+      <rect x="60" y="165" width="18" height="25" rx="9" fill="#a06068" transform="rotate(-20,60,165)"/>
+      <rect x="148" y="168" width="18" height="25" rx="9" fill="#a06068" transform="rotate(15,148,168)"/>
+      <!-- Coins spilling out -->
+      <ellipse cx="55" cy="158" rx="9" ry="6" fill="#FFD93D" transform="rotate(-30,55,158)"/>
+      <ellipse cx="160" cy="155" rx="9" ry="6" fill="#FFD93D" transform="rotate(20,160,155)"/>
+      <ellipse cx="108" cy="175" rx="9" ry="6" fill="#FFD93D"/>
+      <ellipse cx="78" cy="178" rx="7" ry="5" fill="#FFD93D" transform="rotate(-10,78,178)"/>
+      <ellipse cx="138" cy="180" rx="7" ry="5" fill="#FFD93D" transform="rotate(15,138,180)"/>
+      <!-- Tears -->
+      <ellipse cx="88" cy="72" rx="4" ry="6" fill="#7ecbf5" opacity=".8"/>
+      <ellipse cx="126" cy="72" rx="4" ry="6" fill="#7ecbf5" opacity=".8"/>
+      <!-- Big cracks on body -->
+      <path d="M95 100 L88 120 L100 135" stroke="#8B3A40" stroke-width="2.5" fill="none"/>
+      <path d="M125 105 L132 118 L122 130" stroke="#8B3A40" stroke-width="2.5" fill="none"/>
+    </svg>`;
+
+  div.innerHTML=`
+    <div class="pig-wrap">${neg ? brokenPig : normalPig}</div>
+    <div class="bal-big" style="${neg ? 'background:linear-gradient(135deg,var(--red),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;' : ''}">${fmt(c.balance)} F</div>
+    <div class="bal-lbl">${neg ? '😬 Solde négatif de ' : 'Solde de '} ${c.name} ${c.avatar}</div>
+    <p style="font-size:.9rem;font-weight:700;color:#aaa;margin-bottom:10px;text-align:center;">Dernières transactions</p>
+    <ul class="tx-list">${txItems(c.transactions.slice(0,5))}</ul>`;
+}
+
+function txItems(txs){
+  if(!txs.length) return '<li style="text-align:center;color:#ccc;padding:16px;">Aucune transaction</li>';
+  return txs.map(t=>`<li class="tx-item">
+    <div class="tx-icon">${t.type==='add'?'💰':'💸'}</div>
+    <div class="tx-info"><div class="tx-reason">${t.reason}</div><div class="tx-date">${fmtDate(t.date)}</div></div>
+    <div class="tx-amt ${t.type==='add'?'pos':'neg'}">${t.type==='add'?'+':'-'}${fmt(t.amount)} F</div>
+  </li>`).join('');
+}
+
+// ─── PIG OVERLAY ───────────────────────────────────────────────
+const pigSVGBase = (blush='#FF8FA3', eyeL='#3D2C3E', eyeR='#3D2C3E', mouth='', extras='') => `
+<svg width="180" height="180" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="100" cy="115" rx="70" ry="60" fill="#FFB3BA"/>
+  <circle cx="100" cy="65" r="42" fill="#FFB3BA"/>
+  <ellipse cx="68" cy="38" rx="14" ry="18" fill="#FF8FA3" transform="rotate(-15,68,38)"/>
+  <ellipse cx="132" cy="38" rx="14" ry="18" fill="#FF8FA3" transform="rotate(15,132,38)"/>
+  <ellipse cx="68" cy="38" rx="8" ry="11" fill="#FFB3BA" transform="rotate(-15,68,38)"/>
+  <ellipse cx="132" cy="38" rx="8" ry="11" fill="#FFB3BA" transform="rotate(15,132,38)"/>
+  <circle cx="85" cy="58" r="7" fill="white"/>
+  <circle cx="115" cy="58" r="7" fill="white"/>
+  <circle cx="87" cy="59" r="4" fill="${eyeL}"/>
+  <circle cx="117" cy="59" r="4" fill="${eyeR}"/>
+  <circle cx="88" cy="58" r="1.5" fill="white"/>
+  <circle cx="118" cy="58" r="1.5" fill="white"/>
+  <ellipse cx="100" cy="74" rx="16" ry="12" fill="#FF8FA3"/>
+  <circle cx="93" cy="74" r="4" fill="#FF6B9D"/>
+  <circle cx="107" cy="74" r="4" fill="#FF6B9D"/>
+  ${mouth}
+  <rect x="65" y="160" width="22" height="30" rx="11" fill="#FFB3BA"/>
+  <rect x="113" y="160" width="22" height="30" rx="11" fill="#FFB3BA"/>
+  <path d="M170 110 Q185 95 178 80 Q171 65 180 55" stroke="#FF8FA3" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <rect x="88" y="87" width="24" height="5" rx="2.5" fill="#FF6B9D" opacity=".7"/>
+  <ellipse cx="73" cy="70" rx="10" ry="7" fill="${blush}" opacity=".6"/>
+  <ellipse cx="127" cy="70" rx="10" ry="7" fill="${blush}" opacity=".6"/>
+  ${extras}
+</svg>`;
+
+const happyMouth = `<path d="M86 80 Q100 94 114 80" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+const sadMouth   = `<path d="M86 88 Q100 78 114 88" stroke="#FF6B9D" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+const sadEyes    = `<path d="M82 54 L88 60" stroke="#3D2C3E" stroke-width="2"/><path d="M112 54 L118 60" stroke="#3D2C3E" stroke-width="2"/>`;
+
+let pigOverlayTimer=null;
+
+function showPigDance(childName, amount){
+  const stage=document.getElementById('pigStage');
+  const confettiColors=['#FFD93D','#FF6B9D','#6BCB77','#4D96FF','#C77DFF','#FF9A3C'];
+  let confetti='';
+  for(let i=0;i<12;i++){
+    const clr=confettiColors[i%confettiColors.length];
+    const left=10+Math.random()*80;
+    const delay=(Math.random()*0.8).toFixed(2);
+    confetti+=`<div class="cfl" style="left:${left}%;background:${clr};animation-delay:${delay}s;animation-duration:${(0.8+Math.random()*0.6).toFixed(2)}s"></div>`;
+  }
+  stage.innerHTML=`
+    <div class="confetti-wrap">${confetti}</div>
+    <div class="pig-dance">${pigSVGBase('#FF8FA3','#3D2C3E','#3D2C3E',happyMouth,'')}</div>
+    <div class="pig-msg">🎉 Super ! +${fmt(amount)} F</div>
+    <div class="pig-sub">ajouté au compte de ${childName}<br><span style="font-size:.8rem;opacity:.6">Appuie pour continuer</span></div>`;
+  document.getElementById('pigOverlay').classList.add('show');
+  clearTimeout(pigOverlayTimer);
+  pigOverlayTimer=setTimeout(closePigOverlay,3500);
+}
+
+function showPigCry(childName, amount){
+  const stage=document.getElementById('pigStage');
+  let tears='';
+  for(let i=0;i<5;i++){
+    const left=30+Math.random()*40;
+    const delay=(Math.random()*0.8).toFixed(2);
+    tears+=`<div class="tear" style="left:${left}%;top:70px;animation-delay:${delay}s;">💧</div>`;
+  }
+  stage.innerHTML=`
+    <div style="position:relative;display:inline-block;">
+      ${tears}
+      <div class="pig-cry">${pigSVGBase('#aaa','#555','#555',sadMouth,sadEyes)}</div>
+    </div>
+    <div class="pig-msg" style="color:#FFB3D0;">😢 -${fmt(amount)} F</div>
+    <div class="pig-sub">retiré du compte de ${childName}<br><span style="font-size:.8rem;opacity:.6">Appuie pour continuer</span></div>`;
+  document.getElementById('pigOverlay').classList.add('show');
+  clearTimeout(pigOverlayTimer);
+  pigOverlayTimer=setTimeout(closePigOverlay,3500);
+}
+
+function closePigOverlay(){
+  document.getElementById('pigOverlay').classList.remove('show');
+  clearTimeout(pigOverlayTimer);
+}
+
+// ─── ANIMATIONS ────────────────────────────────────────────────
+function spawnCoins(){
+  const pig=document.getElementById('pigSvg');
+  if(pig){ pig.classList.add('pop'); setTimeout(()=>pig.classList.remove('pop'),700); }
+  const c=document.getElementById('fxCoins');
+  for(let i=0;i<14;i++) setTimeout(()=>{
+    const el=document.createElement('div');
+    el.className='coin'; el.textContent=['🪙','💰','✨'][Math.floor(Math.random()*3)];
+    el.style.left=(15+Math.random()*70)+'%'; el.style.top='25%';
+    c.appendChild(el); setTimeout(()=>el.remove(),1500);
+  },i*70);
+}
+function spawnStars(){
+  const c=document.getElementById('fxStars');
+  ['⭐','🌟','✨','💫','🎉'].forEach((s,i)=>setTimeout(()=>{
+    const el=document.createElement('div');
+    el.className='star'; el.textContent=s;
+    el.style.left=(10+Math.random()*80)+'%'; el.style.top=(10+Math.random()*60)+'%';
+    c.appendChild(el); setTimeout(()=>el.remove(),1100);
+  },i*120));
+}
+function triggerCrack(){
+  const pig=document.getElementById('pigSvg');
+  const cr=document.getElementById('cracks');
+  if(!pig) return;
+  if(cr) cr.style.opacity='1';
+  pig.classList.add('shake');
+  setTimeout(()=>{ pig.classList.remove('shake'); if(cr) cr.style.opacity='0'; },800);
+}
+
+// ─── MODALS ────────────────────────────────────────────────────
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
